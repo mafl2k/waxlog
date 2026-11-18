@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html class="waxlog" tabindex="0" data-settings-key="waxlog-settings-v1">
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+        <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';"/>
+
+        <title>WaxLog - Sauce for Zwift™</title>
+
+        <script src="/pages/src/preloads.js"></script>
+        <link rel="stylesheet" href="/pages/css/common.css"/>
+        <link rel="stylesheet" href="css/waxlog.css"/>
+
+        <script type="module">
+            import {main} from './src/waxlog.mjs';
+            main();
+        </script>
+    </head>
+    <body>
+        <div id="titlebar">
+            <header>
+                <div class="title">WaxLog</div>
+                <div class="filler"></div>
+                <div class="buttons">
+                    <!-- Sauce opens this as its own child window with this size, independent of
+                         the overlay's size (same mechanism as Sauce's built-in settings). -->
+                    <a class="button open-settings" title="Chains & settings"
+                       href="waxlog-settings.html?width=420&height=600&child-window"
+                       target="waxlog-settings"><ms>tune</ms></a>
+                    <div title="Close this window" class="button close electron-only"><ms>close</ms></div>
+                </div>
+            </header>
+        </div>
+
+        <div id="wax-root">
+            <section id="wax-display" title="Click for chains & settings">
+                <div class="wax-empty">No chain yet. Click to add one.</div>
+                <div class="wax-main">
+                    <div class="wax-head">
+                        <!-- No color dot: the stripe on the left shows the chain's color. -->
+                        <span class="wax-name"></span>
+                        <!-- Only while the settings window's Demo (or ?demo) runs. -->
+                        <span id="wax-demo-badge" class="wax-demo-badge"></span>
+                        <span class="wax-status"></span>
+                    </div>
+                    <div class="wax-km">
+                        <span class="wax-since"></span><small> / <span class="wax-limit"></span> km</small>
+                    </div>
+                    <!-- One-row stages: km left in the row, the km in the line below (CSS picks). -->
+                    <div class="wax-left"><span class="wax-left-num"></span><small class="wax-left-unit"></small></div>
+                    <div class="wax-bar"><div class="wax-bar-fill"></div></div>
+                    <div class="wax-sub"></div>
+                    <div class="wax-sub-km"></div>
+                </div>
+            </section>
+
+            <section id="wax-alert" role="alert">
+                <div class="wax-alert-icon"><ms>water_drop</ms></div>
+                <div class="wax-alert-text">
+                    <div class="wax-alert-title"></div>
+                    <div class="wax-alert-msg"></div>
+                </div>
+                <button class="wax-alert-dismiss" title="Dismiss (or click anywhere, or press Esc)">OK</button>
+            </section>
+        </div>
+    </body>
+</html>

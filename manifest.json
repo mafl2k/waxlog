@@ -1,0 +1,22 @@
+{
+    "manifest_version": 1,
+    "name": "WaxLog",
+    "description": "Wax chain km log: several chains, switch the active one, km limit with on-screen alert.",
+    "author": "mafl",
+    "version": "0.6.4",
+    "web_root": "pages",
+    "windows": [{
+        "file": "pages/waxlog.html",
+        "id": "waxlog",
+        "name": "WaxLog",
+        "description": "Counts your ride km on the active wax chain and warns when it needs fresh wax.",
+        "overlay": true,
+        "frame": false,
+        "default_bounds": {
+            "width": 300,
+            "height": 140,
+            "x": 20,
+            "y": 20
+        }
+    }]
+}

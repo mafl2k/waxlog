@@ -1,0 +1,477 @@
+/* Colors come from the active Sauce theme (app setting or this window's override), which
+   Sauce exposes as --theme-<name>-hue/-sat/-light. The fallbacks are Sauce's default theme,
+   used only in the plain-browser preview. */
+html.waxlog {
+    --wax-h-bg: var(--theme-bg-hue, 0) var(--theme-bg-sat, 100%) var(--theme-bg-light, 36%);
+    --wax-h-bg2: var(--theme-bg2-hue, 233) var(--theme-bg2-sat, 96%) var(--theme-bg2-light, 15%);
+    --wax-h-fg: var(--theme-fg-hue, 0) var(--theme-fg-sat, 0%) var(--theme-fg-light, 100%);
+    --wax-h-neg: var(--theme-negative-hue, 0) var(--theme-negative-sat, 85%) var(--theme-negative-light, 46%);
+    --wax-h-pos: var(--theme-positive-hue, 130) var(--theme-positive-sat, 60%) var(--theme-positive-light, 50%);
+
+    /* The theme gradient, for the plain-browser preview and the alert/peek backgrounds. In
+       Sauce the window background is Sauce's own (see "overlay window" below). */
+    --wax-bg: linear-gradient(135deg, hsl(var(--wax-h-bg)), hsl(var(--wax-h-bg2)));
+    --wax-bg-solid: hsl(var(--wax-h-bg2));
+    --wax-fg: hsl(var(--wax-h-fg));
+    --wax-dim: hsl(var(--wax-h-fg) / 0.68);
+    --wax-line: hsl(var(--wax-h-fg) / 0.15);
+    --wax-ok: hsl(var(--wax-h-pos));
+    --wax-close: #f2c230;
+    --wax-due: hsl(var(--wax-h-neg));
+    --wax-over: hsl(var(--wax-h-neg));
+    --wax-btn: hsl(var(--wax-h-fg) / 0.12);
+    --wax-btn-hover: hsl(var(--wax-h-fg) / 0.24);
+    --wax-radius: 2mm;  /* Sauce's window corners (common.css rounds the body by 2mm) */
+    font-family: Saira, system-ui, sans-serif;
+    color: var(--wax-fg);
+    /* No html background here: Sauce keeps a 0.2 % alpha on <html> on purpose, because fully
+       transparent windows break on Windows. */
+}
+
+/* ---------- overlay window ---------- */
+
+/* The window background is Sauce's own, as in its built-in windows: Sauce paints the body with
+   the theme gradient at the theme's opacity (Transparent themes make it see-through, and it shows
+   again on hover), the background texture, the outline and the rounded corners. So no own box
+   background, and no transparent-bg body class in the HTML, or the theme's transparency would not
+   apply. Minimal mode's "invisible until the alert" sets transparent-bg from the script while the
+   window is hidden (Sauce's invisible-overlay switch; Sauce still shows it on hover). */
+html.waxlog, html.waxlog body { height: 100%; }
+html.waxlog:not(.settings-page) body {
+    margin: 0;
+    overflow: hidden;
+}
+
+/* Sauce's per-window "Solid background" (Common.setBackground sets the class and the color with
+   its opacity), painted the way Sauce's windows do it. Not while minimal mode hides the window. */
+html.solid-background:not(.wax-hidden) { background: var(--background-color); }
+html.solid-background:not(.wax-hidden) body { background: transparent; }
+
+/* Outside Sauce (plain browser preview) there is no common.css to hide the titlebar, nor to
+   paint the settings page background, and Sauce's own selects don't exist. */
+html.wax-standalone #titlebar { display: none; }
+html.wax-standalone.settings-page body { margin: 0; background: var(--wax-bg); }
+/* Plain-browser preview of the overlay: the theme gradient with Sauce's corners. */
+html.wax-standalone:not(.settings-page) body { background: var(--wax-bg); border-radius: var(--wax-radius); }
+html.wax-standalone:not(.settings-page) body.transparent-bg { background: transparent; }
+html.wax-standalone .sauce-only { display: none !important; }
+
+/* The box fills the window and takes its rounded corners, so the chain stripe and the
+   over-limit frame follow them. */
+#wax-root {
+    position: relative;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+#wax-root section { box-sizing: border-box; }
+
+/* ---------- settings window ---------- */
+
+/* Sauce paints the settings window with the theme; the manager sits on it directly. */
+html.settings-page #wax-root {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    overflow-y: auto;
+    padding: 0;
+}
+
+html.settings-page #wax-root #wax-manage {
+    display: block;
+    height: auto;
+    overflow: visible;
+    background: none;
+    border-radius: 0;
+    font-size: 1rem;
+}
+
+#wax-manage h4 {
+    margin: 12px 0 2px;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--wax-dim);
+}
+
+#wax-appearance label { display: flex; align-items: center; gap: 6px; }
+#wax-appearance select { flex: 1; min-width: 0; }
+#wax-appearance input[type="text"] { width: 5.5em; }
+.wax-opacity input[type="range"] { flex: 1; min-width: 0; }
+#wax-root .wax-opacity input[type="number"] { width: 4.5em; }
+.wax-note, #wax-demo-status { font-size: 0.8em; color: var(--wax-dim); }
+
+#wax-demo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid var(--wax-line);
+    padding-top: 6px;
+}
+#wax-demo-btn { flex: 0 0 auto; }
+
+/* ---------- compact display ---------- */
+
+/* No background of its own: it sits on Sauce's window background. */
+#wax-display {
+    height: 100%;
+    border-radius: var(--wax-radius);
+    padding: 10px 14px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-left: 6px solid var(--chain-color, #888);
+}
+
+#wax-display .wax-empty { display: none; color: var(--wax-dim); }
+#wax-display.empty .wax-empty { display: block; }
+#wax-display.empty .wax-main { display: none !important; }
+
+.wax-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95em;
+}
+
+.wax-dot {
+    flex: 0 0 auto;
+    width: 0.8em;
+    height: 0.8em;
+    border-radius: 50%;
+    background: var(--chain-color, #888);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+/* When the row gets tight the name gives way (it's also told by the stripe's color), never
+   the status. */
+.wax-name {
+    flex: 0 1 auto;
+    min-width: 0;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* A made-up ride (Demo button or ?demo) is never mistaken for the real log. */
+.wax-demo-badge {
+    display: none;
+    flex: 0 0 auto;
+    font-size: 0.75em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--wax-close);
+    font-variant-numeric: tabular-nums;
+}
+html.wax-demo .wax-demo-badge { display: inline; }
+
+.wax-status {
+    flex: 0 0 auto;
+    margin-left: auto;
+    white-space: nowrap;
+    font-size: 0.75em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.wax-km {
+    font-size: 2em;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.wax-km small {
+    font-size: 0.45em;
+    font-weight: 400;
+    color: var(--wax-dim);
+}
+
+.wax-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: hsl(var(--wax-h-fg) / 0.14);
+    overflow: hidden;
+    margin: 4px 0;
+}
+
+.wax-bar-fill {
+    height: 100%;
+    width: 0;
+    background: var(--wax-ok);
+    transition: width 400ms, background-color 400ms;
+}
+
+.wax-sub, .wax-sub-km {
+    font-size: 0.8em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--wax-dim);
+}
+
+[data-level="ok"] .wax-status { color: var(--wax-ok); }
+[data-level="close"] .wax-bar-fill { background: var(--wax-close); }
+[data-level="due"] .wax-bar-fill { background: var(--wax-due); }
+[data-level="over"] .wax-bar-fill { background: var(--wax-over); }
+[data-level="close"] .wax-status { color: var(--wax-close); }
+/* Due and over: red on a white badge, readable on every theme (Sauce's default theme is red
+   itself, and transparent themes show Zwift behind). Fixed colors on purpose. No vertical
+   padding, so the row keeps its height when the status changes mid-ride (the display stage is
+   only measured on resize). */
+#wax-display:is([data-level="due"], [data-level="over"]) .wax-status {
+    color: #c62828;
+    background: #fff;
+    padding: 0 0.4em;
+    border-radius: 0.25em;
+    box-shadow: 0 0 0 1px #fff;
+}
+
+#wax-display[data-level="over"] {
+    animation: wax-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes wax-pulse {
+    0%, 100% { box-shadow: inset 0 0 0 2px transparent; }
+    50% { box-shadow: inset 0 0 0 2px var(--wax-over); }
+}
+
+/* ---------- on-screen alert box ---------- */
+
+#wax-alert {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    padding: 10px 12px;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, hsl(var(--wax-h-neg) / 0.35), hsl(var(--wax-h-bg2) / 0.95)),
+                var(--wax-bg-solid) !important;
+    border: 2px solid var(--wax-due);
+    border-radius: var(--wax-radius);
+    animation: wax-pop 300ms ease-out;
+}
+
+#wax-alert { cursor: pointer; }  /* click anywhere (or Escape) to dismiss */
+#wax-alert[data-level="over"] {
+    background: linear-gradient(135deg, hsl(var(--wax-h-neg) / 0.6), hsl(var(--wax-h-bg2) / 0.95)),
+                var(--wax-bg-solid) !important;
+}
+html.wax-alerting #wax-alert { display: flex; }
+
+@keyframes wax-pop {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.wax-alert-icon {
+    flex: 0 0 2.2em;
+    width: 2.2em;
+    overflow: hidden;
+    text-align: center;
+}
+
+.wax-alert-icon ms {
+    font-size: 2.2em;
+    color: var(--wax-due);
+}
+
+#wax-alert[data-level="over"] .wax-alert-icon ms { color: var(--wax-over); }
+
+/* Window shrunk to the slim row: keep just the title line of the alert. */
+@media (max-height: 80px) {
+    #wax-alert { padding: 2px 8px; }
+    .wax-alert-icon, .wax-alert-msg { display: none; }
+}
+
+.wax-alert-text { flex: 1; min-width: 0; }
+.wax-alert-title { font-weight: 700; font-size: 1.05em; }
+.wax-alert-msg {
+    font-size: 0.8em;
+    line-height: 1.25;
+    color: var(--wax-dim);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ---------- manage panel ---------- */
+
+#wax-manage {
+    padding: 8px 10px;
+}
+
+#wax-all { margin-left: auto; }
+#wax-all[hidden] { display: none; }
+#wax-all[hidden] + #wax-done { margin-left: auto; }
+
+.wax-manage-head {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    position: sticky;  /* keep "Done" reachable while scrolling a long list */
+    top: -8px;
+    margin: -8px -10px 6px;
+    padding: 8px 10px 6px;
+    background: var(--wax-bg-solid);
+    z-index: 1;
+}
+
+#wax-chains {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.wax-chain {
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    background: hsl(var(--wax-h-fg) / 0.06);
+    border-left: 4px solid var(--chain-color, #888);
+}
+
+.wax-chain.active { background: hsl(var(--wax-h-fg) / 0.14); }
+
+.wax-chain-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wax-chain-name { font-weight: 600; }
+.wax-chain-km { margin-left: auto; font-variant-numeric: tabular-nums; }
+.wax-chain-meta { font-size: 0.8em; color: var(--wax-dim); }
+
+.wax-chain-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.wax-edit { display: none; }
+.wax-chain.editing .wax-edit { display: flex; }
+
+#wax-root form {
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-top: 6px;
+}
+
+#wax-add-form, #wax-settings { display: flex; }
+
+#wax-root input:not([type="checkbox"]):not([type="color"]):not([type="range"]) {
+    background: hsl(var(--wax-h-bg2) / 0.6);
+    color: inherit;
+    border: 1px solid hsl(var(--wax-h-fg) / 0.25);
+    border-radius: 5px;
+    padding: 3px 6px;
+    font: inherit;
+    min-width: 0;
+}
+
+#wax-root input[name="label"] { flex: 1 1 7em; }
+#wax-root input[type="number"] { width: 4.5em; }
+#wax-root input[type="color"] { width: 2.2em; height: 1.8em; padding: 0; border: none; background: none; }
+
+#wax-root button {
+    background: var(--wax-btn);
+    color: inherit;
+    border: none;
+    border-radius: 5px;
+    padding: 3px 9px;
+    font: inherit;
+    font-size: 0.85em;
+    cursor: pointer;
+}
+
+#wax-root button:hover:not(:disabled) { background: var(--wax-btn-hover); }
+#wax-root button:disabled { opacity: 0.4; cursor: default; }
+#wax-root button.confirming { background: var(--wax-close); color: #111; }
+#wax-root button.danger:hover,
+#wax-root button.danger.confirming { background: var(--wax-due); color: #fff; }
+
+#wax-add { margin: 4px 0 8px; }
+#wax-add summary { cursor: pointer; color: var(--wax-dim); }
+
+#wax-settings, #wax-appearance {
+    border-top: 1px solid var(--wax-line);
+    padding-top: 6px;
+    color: var(--wax-dim);
+}
+
+#wax-appearance { display: grid; gap: 6px; }
+
+/* ---------- display stages ---------- */
+
+/* The script picks the largest stage that fits the window (data-wax-size on <html>, see
+   Core.SIZES); it changes only when the window is resized, never during a ride. "full" is the
+   box above. The smaller ones put dot, name, status and km in one row:
+     sub  row, bar, "km left" line    bar  row, bar    row  just the row */
+.wax-main { display: flow-root; }  /* so the measured height includes the margins */
+
+html:is([data-wax-size="sub"], [data-wax-size="bar"], [data-wax-size="row"]) #wax-display {
+    padding: 4px 10px;
+    border-left-width: 4px;
+}
+
+html:is([data-wax-size="sub"], [data-wax-size="bar"], [data-wax-size="row"]) #wax-display .wax-main {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    column-gap: 8px;
+}
+
+html:is([data-wax-size="sub"], [data-wax-size="bar"], [data-wax-size="row"]) .wax-head { min-width: 0; }
+html:is([data-wax-size="sub"], [data-wax-size="bar"], [data-wax-size="row"]) .wax-head .wax-status {
+    margin-left: 4px;
+    font-size: 0.8em;
+}
+/* The row shows what's left; the km ridden since waxing move to the line below ("sub"). */
+.wax-left, .wax-sub-km { display: none; }
+html:is([data-wax-size="sub"], [data-wax-size="bar"], [data-wax-size="row"]) .wax-km { display: none; }
+html:is([data-wax-size="sub"], [data-wax-size="bar"], [data-wax-size="row"]) .wax-left {
+    display: block;
+    font-size: 1.15em;
+    font-weight: 700;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+.wax-left small {
+    font-size: 0.6em;
+    font-weight: 400;
+    color: var(--wax-dim);
+}
+html:is([data-wax-size="sub"], [data-wax-size="bar"]) #wax-display .wax-bar {
+    grid-column: 1 / -1;
+    height: 4px;
+    margin: 3px 0 0;
+}
+html[data-wax-size="sub"] #wax-display .wax-sub-km { display: block; grid-column: 1 / -1; margin-top: 2px; }
+html:is([data-wax-size="sub"], [data-wax-size="bar"], [data-wax-size="row"]) #wax-display .wax-sub,
+html[data-wax-size="row"] #wax-display .wax-bar { display: none; }
+
+/* ---------- hide until alert ---------- */
+
+/* Hidden until the alert threshold (body.transparent-bg makes Sauce drop the window background).
+   Hovering the window peeks so it can still be opened; Sauce shows its background then too. */
+html.wax-hidden:not(.wax-alerting) #wax-display {
+    opacity: 0;
+    transition: opacity 300ms;
+}
+
+html.wax-hidden:not(.wax-alerting):hover #wax-display {
+    opacity: 0.55;
+}
+
+/* While Sauce's title bar is shown (right-click), so you can see what you're moving. */
+html.wax-hidden.settings-mode #wax-display {
+    opacity: 1 !important;
+}

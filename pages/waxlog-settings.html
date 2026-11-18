@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html class="settings-page waxlog" tabindex="0" data-settings-key="waxlog-settings-v1">
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+        <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';"/>
+
+        <title>WaxLog - Settings - Sauce for Zwift™</title>
+
+        <script src="/pages/src/preloads.js"></script>
+        <link rel="stylesheet" href="/pages/css/common.css"/>
+        <link rel="stylesheet" href="css/waxlog.css"/>
+
+        <script type="module">
+            import {settingsMain} from './src/waxlog.mjs';
+            settingsMain();
+        </script>
+    </head>
+    <body>
+        <div id="titlebar">
+            <header>
+                <div class="title">WaxLog - Chains & Settings</div>
+                <div class="filler"></div>
+                <div class="buttons">
+                    <div title="Close this window" class="button close electron-only"><ms>close</ms></div>
+                </div>
+            </header>
+        </div>
+
+        <div id="wax-root">
+            <section id="wax-manage">
+                <div class="wax-manage-head">
+                    <strong>Chains</strong>
+                    <button id="wax-all" data-confirm="All chains to 0 km?"
+                            title="Mark every chain as freshly waxed">Wax all</button>
+                    <button id="wax-done" title="Close this window">Done</button>
+                </div>
+                <ul id="wax-chains"></ul>
+
+                <details id="wax-add">
+                    <summary>Add chain</summary>
+                    <form id="wax-add-form" autocomplete="off">
+                        <input name="label" placeholder="Name, e.g. Blue" maxlength="24"/>
+                        <input name="color" type="color" value="#1e88e5" title="Color"/>
+                        <label>Limit <input name="limitKm" type="number" min="1" step="1" value="300"/> km</label>
+                        <button type="submit">Add</button>
+                    </form>
+                </details>
+
+                <h4>Alerts</h4>
+                <form id="wax-settings">
+                    <label>Alert at <input name="alertPct" type="number" min="50" max="99" step="1"/> % of limit</label>
+                    <label><input name="beep" type="checkbox"/> Beep on alert</label>
+                    <label title="Invisible while the chain is fine; shows up at the alert threshold. Hover the window to peek.">
+                        <input name="minimal" type="checkbox"/> Hide until alert</label>
+                </form>
+
+                <!-- Stores an end time in WaxLog's own prefs (waxlog:prefs:v1); the overlay
+                     follows it live and shows a made-up ride on a copy of the log. -->
+                <h4>Demo</h4>
+                <div id="wax-demo">
+                    <button id="wax-demo-btn" type="button">Start demo</button>
+                    <div id="wax-demo-status"></div>
+                </div>
+
+                <!-- Sauce's own per-window appearance overrides. Empty = follow the app's
+                     theme/texture. Bound to Sauce's settings store by initSettingsForm. -->
+                <h4 class="sauce-only">Appearance</h4>
+                <form id="wax-appearance" class="sauce-only">
+                    <label>Theme <select is="sauce-theme" override></select></label>
+                    <label>Background <select is="sauce-background-texture" override></select></label>
+                    <!-- Sauce's own per-window background fields (same names as its windows and
+                         other mods use; the overlay applies them with Common.setBackground). -->
+                    <label>Solid background <input type="checkbox" name="solidBackground"/></label>
+                    <label>Background color
+                        <input type="color" name="backgroundColor" value="#000000" data-depends-on="solidBackground"/>
+                        <input type="text" name="backgroundColor" value="#000000" size="7" data-depends-on="solidBackground"/></label>
+                    <!-- Slider and number with the same name, as in Sauce's own settings: Sauce keeps them in step. -->
+                    <label class="wax-opacity">Opacity
+                        <input type="range" name="backgroundAlpha" min="0" max="100" step="5" value="100" data-depends-on="solidBackground"/>
+                        <input type="number" name="backgroundAlpha" min="0" max="100" value="100" data-depends-on="solidBackground"/> %</label>
+                    <div class="wax-note">Off: the window follows your Sauce theme (a Transparent theme
+                        makes it see-through). On: your color with the opacity you set (100 = opaque,
+                        lower = see-through).</div>
+                </form>
+            </section>
+        </div>
+
+        <template id="wax-chain-tpl">
+            <li class="wax-chain">
+                <div class="wax-chain-row">
+                    <span class="wax-dot"></span>
+                    <span class="wax-chain-name"></span>
+                    <span class="wax-chain-km"></span>
+                </div>
+                <div class="wax-bar"><div class="wax-bar-fill"></div></div>
+                <div class="wax-chain-meta"></div>
+                <div class="wax-chain-actions">
+                    <button data-act="activate">Put on bike</button>
+                    <button data-act="waxed" data-confirm="Reset to 0 km?">Waxed</button>
+                    <button data-act="edit">Edit</button>
+                    <button data-act="delete" data-confirm="Really delete?" class="danger">Delete</button>
+                </div>
+                <form class="wax-edit" autocomplete="off">
+                    <input name="label" maxlength="24"/>
+                    <input name="color" type="color"/>
+                    <label>Limit <input name="limitKm" type="number" min="1" step="1"/> km</label>
+                    <label>Since wax <input name="sinceWaxKm" type="number" min="0" step="0.1"/> km</label>
+                    <button type="submit">Save</button>
+                </form>
+            </li>
+        </template>
+    </body>
+</html>
