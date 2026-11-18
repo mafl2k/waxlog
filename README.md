@@ -3,8 +3,8 @@ WaxLog for Sauce for Zwift
 
 A small [Sauce for Zwift](https://www.sauce.llc) mod for riders who wax their chains. It counts
 the km you ride in Zwift on the chain that is currently on the bike, and pops up a box on screen
-when that chain needs fresh wax. The idea is borrowed from
-[Karoo-WaxLog](https://github.com/Zalvato/Karoo-WaxLog).
+when that chain needs fresh wax. The idea comes from
+[Karoo-WaxLog](https://github.com/Zalvato/Karoo-WaxLog) by Zalvato (see [Credits](#credits)).
 
 ![The WaxLog window during a ride](docs/images/overlay-full.png)
 
@@ -162,6 +162,15 @@ Files
 | `tests/core.test.mjs` | Tests for the core logic |
 | `scripts/zip.sh` | Builds the release zip |
 | `docs/images/` | Screenshots for this README |
+
+
+Credits
+-------
+The idea for WaxLog comes from [Karoo-WaxLog](https://github.com/Zalvato/Karoo-WaxLog) by
+Zalvato, a Hammerhead Karoo extension that counts the km of your waxed chains, with chain
+rotation, alerts and backups. WaxLog brings that idea to Zwift through Sauce for Zwift; it's a
+separate app written from scratch and shares no code with it. Ride outside with a Karoo? Have
+a look at Karoo-WaxLog.
 
 
 License
