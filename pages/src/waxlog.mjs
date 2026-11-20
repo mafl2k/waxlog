@@ -760,28 +760,31 @@ function onEditSubmit(ev) {
     }
     ev.preventDefault();
     const li = form.closest('.wax-chain');
+    // Read the form now: mutate runs later, after the render() below has refilled the form
+    // with the stored values.
+    const id = li.dataset.id;
+    const name = form.label.value.trim();
+    const color = form.color.value;
+    const limit = Number(form.limitKm.value);
+    // Only touch the km if the user actually typed there; otherwise the field holds a
+    // rounded snapshot from when the form opened and would throw away km ridden since.
+    const kmText = form.sinceWaxKm.value.trim();
+    const km = form.dataset.kmDirty && kmText !== '' ? Number(kmText) : NaN;
     mutate(d => {
-        const chain = d.chains.find(c => c.id === li.dataset.id);
+        const chain = d.chains.find(c => c.id === id);
         if (!chain) {
             return false;
         }
-        chain.name = form.label.value.trim() || chain.name;
-        chain.color = form.color.value;
+        chain.name = name || chain.name;
+        chain.color = color;
         let changedKm = false;
-        const limit = Number(form.limitKm.value);
         if (limit > 0 && limit !== chain.limitKm) {
             chain.limitKm = limit;
             changedKm = true;
         }
-        // Only touch the km if the user actually typed there; otherwise the field holds a
-        // rounded snapshot from when the form opened and would throw away km ridden since.
-        const kmText = form.sinceWaxKm.value.trim();
-        if (form.dataset.kmDirty && kmText !== '') {
-            const km = Number(kmText);
-            if (Number.isFinite(km) && km >= 0) {
-                chain.sinceWaxM = km * 1000;
-                changedKm = true;
-            }
+        if (Number.isFinite(km) && km >= 0) {
+            chain.sinceWaxM = km * 1000;
+            changedKm = true;
         }
         if (changedKm) {
             alertedLevel.delete(chain.id);
@@ -795,8 +798,10 @@ function onEditSubmit(ev) {
 function onAddSubmit(ev) {
     ev.preventDefault();
     const f = ev.target;
+    // Read the form now: mutate runs later, after it has been cleared below.
+    const chain = {name: f.label.value, color: f.color.value, limitKm: f.limitKm.value};
     mutate(d => {
-        Core.addChain(d, {name: f.label.value, color: f.color.value, limitKm: f.limitKm.value});
+        Core.addChain(d, chain);
     });
     f.label.value = '';
     $('#wax-add').open = false;
@@ -806,14 +811,17 @@ function onAddSubmit(ev) {
 
 function onSettingsChange(ev) {
     const s = ev.currentTarget;
+    // Read the form now: mutate runs later, and a render meanwhile may refill it.
+    const pct = Math.round(Number(s.alertPct.value));
+    const beep = s.beep.checked;
+    const minimal = s.minimal.checked;
     mutate(d => {
-        const pct = Math.round(Number(s.alertPct.value));
         if (pct >= 50 && pct <= 99 && pct !== d.alertPct) {
             d.alertPct = pct;
             alertedLevel.clear();
         }
-        d.beep = s.beep.checked;
-        d.minimal = s.minimal.checked;
+        d.beep = beep;
+        d.minimal = minimal;
     });
 }
 
