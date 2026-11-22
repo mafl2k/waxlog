@@ -2,7 +2,7 @@
     "manifest_version": 1,
     "name": "WaxLog",
     "description": "Wax chain km log: several chains, switch the active one, km limit with on-screen alert.",
-    "author": "mafl",
+    "author": "Matthew Butcher",
     "version": "0.6.5",
     "web_root": "pages",
     "windows": [{
