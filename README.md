@@ -11,13 +11,17 @@ when that chain needs fresh wax. The idea comes from
 - **Several chains**, each with a name, a color and its own km limit
 - **Switch chains** with "Put on bike". Only the active chain counts km.
 - **Waxed** resets the chain's km to 0. Its total km and wax count are kept.
-  **Wax all** does that for every chain at once, for when the whole set went in the pot.
+  **Wax all** does that for every chain at once, for when the whole set went in the pot, and
+  puts #1 (the top chain in the list) back on the bike to start the next rotation.
 - **Fits the window:** the window size decides how much it shows. Drag it flat and you get one
   row (name, status, km left); a bit taller adds the bar, taller still a line with the km since
   waxing (and this ride's km), and with enough room the big box with large km digits and the
   "km left" line under them. When a row gets tight, the chain name is shortened, never the
   status; the colored stripe on the left still tells which chain it is. It only changes when you resize the window,
-  never during a ride.
+  never during a ride. A second after you stop resizing, the window's height shrinks to fit the
+  layout it shows, so there's no empty space. The layout and the text size stay as they are
+  (Sauce sizes the text by the window's width). For a bigger layout, drag the window taller
+  until it appears.
 
   ![The smaller stages: one row with bar and km line, with bar, and the row alone](docs/images/overlay-sub.png)
   ![](docs/images/overlay-bar.png)
@@ -29,11 +33,16 @@ when that chain needs fresh wax. The idea comes from
   (90 % by default), and a pulsing outline once you're over the limit. The status is also
   written out (ok / wax soon / wax due / over limit), so it doesn't rely on color alone.
   "Wax due" and "over limit" stand out as red on a white badge, readable on every theme.
-- **On-screen alert box** (with an optional beep) when the chain reaches the alert threshold
-  and again when it reaches the limit. It names the chain that's ready to go on next. Click
-  anywhere on it or press Esc to dismiss.
+- **On-screen alert** (with an optional beep) when the chain reaches the alert threshold and
+  again when it reaches the limit. Its km keep counting while it's open. Chains rotate in list
+  order: **Switch to …** puts the next chain that's still under the alert threshold on the bike
+  right there. When every chain is used, it offers **Wax all → #1** instead (a second click
+  confirms): all chains to 0 km and #1 back on the bike. Click
+  anywhere else on it, OK, or Esc dismisses it. In a short window it's one row: the km, "⇄
+  Green" and OK. Don't want it? Untick **Show alert message** under Alerts: the colors (and
+  the beep, if on) are the alarm then.
 
-  ![The alert box when the chain is due](docs/images/alert.png)
+  ![The alert when the chain is over the limit](docs/images/alert.png)
 - **Edit** fixes a name, color or limit, or sets the km since waxing by hand (e.g. when you
   start using the mod with chains that are already partly used)
 - **Demo** in the settings window shows a made-up ride for 10 minutes, so you can place and
@@ -83,6 +92,7 @@ Use
 - **Demo:** press **Start demo** in the settings window and the WaxLog window shows a made-up
   ride (600 m per second) for 10 minutes, marked **DEMO** with the time left. It is visible
   even with "Hide until alert", and it runs through the alerts, so you can see where they appear.
+  Switch in the demo only closes the alert; your chains stay as they are.
   Without any chain it uses a sample chain. **Stop demo** ends it early. Meanwhile Zwift data
   is ignored and nothing is saved: the demo km live on a copy of your log. Km you ride in
   Zwift during the demo are not lost; they're counted as soon as the demo ends.
@@ -156,7 +166,7 @@ Files
 | `manifest.json` | Mod manifest (one overlay window) |
 | `pages/waxlog.html` | Overlay window (box + alert) |
 | `pages/waxlog-settings.html` | Chains & settings window |
-| `pages/src/waxlog.mjs` | Sauce wiring, storage, alerts, UI (`main` = overlay, `settingsMain` = settings) |
+| `pages/src/waxlog.mjs` | Sauce wiring, storage, alerts, window fitting, UI (`main` = overlay, `settingsMain` = settings) |
 | `pages/src/waxlog-core.mjs` | Pure logic: data model, ride checkpoint, levels, demo |
 | `pages/css/waxlog.css` | Styles |
 | `tests/core.test.mjs` | Tests for the core logic |

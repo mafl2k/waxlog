@@ -31,8 +31,8 @@
             <section id="wax-manage">
                 <div class="wax-manage-head">
                     <strong>Chains</strong>
-                    <button id="wax-all" data-confirm="All chains to 0 km?"
-                            title="Mark every chain as freshly waxed">Wax all</button>
+                    <button id="wax-all" data-confirm="All to 0 km, #1 on bike?"
+                            title="Mark every chain as freshly waxed and put #1 (the top one) on the bike">Wax all</button>
                     <button id="wax-done" title="Close this window">Done</button>
                 </div>
                 <ul id="wax-chains"></ul>
@@ -50,6 +50,8 @@
                 <h4>Alerts</h4>
                 <form id="wax-settings">
                     <label>Alert at <input name="alertPct" type="number" min="50" max="99" step="1"/> % of limit</label>
+                    <label title="Off: the window's colors (red status, pulsing frame) are the only alarm.">
+                        <input name="alertMessage" type="checkbox"/> Show alert message</label>
                     <label><input name="beep" type="checkbox"/> Beep on alert</label>
                     <label title="Invisible while the chain is fine; shows up at the alert threshold. Hover the window to peek.">
                         <input name="minimal" type="checkbox"/> Hide until alert</label>

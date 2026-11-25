@@ -9,6 +9,7 @@ const alertedLevel = new Map();  // chainId -> highest alert level already shown
 let liveState = null;            // latest Zwift state, maybe not saved yet (see Core.savePlan)
 let savedState = null;           // the last state this window saved
 let alertTimer;
+let alertChainId = null;         // the chain the open alert message is about
 let prefs = Core.normalizePrefs(null);  // own private key (Core.PREFS_KEY): the Demo button
 let demoKind = null;             // null | 'url' (?demo, plain browser) | 'pref' (Demo button)
 let urlDemoStart = 0;
@@ -75,7 +76,7 @@ function onLogChanged() {
     // Waxed / switched / edited in the settings window: drop an alert that no longer applies.
     const d = shown();
     const chain = Core.getActive(d);
-    if (!chain || Core.level(chain, d.alertPct) < 2) {
+    if (!chain || chain.id !== alertChainId || !d.alertMessage || Core.level(chain, d.alertPct) < 2) {
         hideAlert();
     }
 }
@@ -434,41 +435,103 @@ function checkAlert(d, chain) {
 }
 
 
-function nextReadyChain(d) {
-    return d.chains
-        .filter(c => c.id !== d.activeId && Core.pctUsed(c) < d.alertPct)
-        .sort((a, b) => Core.pctUsed(a) - Core.pctUsed(b))[0] || null;
+// The alert message at the threshold and at the limit. It stays until dismissed (OK, a click,
+// Esc; "wax due" also after 30 s), and its km keep counting while it's open (renderAlert).
+function showAlert(d, chain, lvl) {
+    if (d.alertMessage) {  // off: the colors are the alarm, plus the beep
+        alertChainId = chain.id;
+        doc.classList.add('wax-alerting');
+        renderAlert(d);
+        clearTimeout(alertTimer);
+        if (lvl < 3) {
+            alertTimer = setTimeout(hideAlert, 30000);
+        }
+    }
+    if (d.beep) {
+        beep(lvl >= 3 ? 3 : 2);
+    }
 }
 
 
-function showAlert(d, chain, lvl) {
+// Fills the open alert from the current km; runs with every render of the box.
+function renderAlert(d) {
+    if (!doc.classList.contains('wax-alerting')) {
+        return;
+    }
+    const chain = Core.getActive(d);
+    if (!chain || chain.id !== alertChainId) {
+        return;
+    }
     const el = $('#wax-alert');
-    const over = lvl >= 3;
-    const used = `${Core.fmtKm(chain.sinceWaxM, 0)} / ${chain.limitKm} km`;
+    const over = Core.level(chain, d.alertPct) >= 3;
+    const used = `${Core.fmtKm(chain.sinceWaxM)} / ${chain.limitKm} km`;
     const rem = Core.remainingKm(chain);
-    const next = nextReadyChain(d);
-    el.querySelector('.wax-alert-title').textContent =
-        `${chain.name}: ${over ? 'over limit' : 'wax due'}`;
-    let msg = over ? `${(-rem).toFixed(0)} km over (${used}).` : `${rem.toFixed(0)} km left (${used}).`;
+    const next = Core.nextInRotation(d);
+    const usedUp = !next && d.chains.length > 1;  // every chain used: wax them all, start at #1
+    // The km are in the title, so a short window (title only) still shows them counting.
+    setText(el.querySelector('.wax-alert-chain'), `${chain.name}: `);
+    setText(el.querySelector('.wax-alert-km'),
+            over ? `${(-rem).toFixed(1)} km over` : `wax due, ${rem.toFixed(1)} km left`);
+    let msg = `${over ? 'Over the limit' : 'Close to the limit'}: ${used}.`;
     if (next) {
-        msg += over ? ` Swap to ${next.name}.` : ` Next ready: ${next.name}.`;
+        msg += ` Next ready: ${next.name}.`;
+    } else if (usedUp) {
+        msg += ' All chains used.';  // the button says the rest: "Wax all → <#1>"
     }
-    el.querySelector('.wax-alert-msg').textContent = msg;
+    setText(el.querySelector('.wax-alert-msg'), msg);
     el.dataset.level = over ? 'over' : 'due';
-    doc.classList.add('wax-alerting');
-    clearTimeout(alertTimer);
-    if (!over) {
-        alertTimer = setTimeout(hideAlert, 30000);
+    const sw = el.querySelector('.wax-alert-switch');
+    sw.hidden = !next;
+    if (next) {
+        sw.dataset.id = next.id;
+        setText(sw.querySelector('.wax-alert-next'), next.name);
     }
-    if (d.beep) {
-        beep(over ? 3 : 2);
+    const wa = el.querySelector('.wax-alert-waxall');
+    wa.hidden = !usedUp;
+    if (usedUp && !wa.classList.contains('confirming')) {  // keep "Sure?" while it asks
+        setText(wa, `Wax all \u2192 ${d.chains[0].name}`);
     }
 }
 
 
 function hideAlert() {
     clearTimeout(alertTimer);
+    alertChainId = null;
     doc.classList.remove('wax-alerting');
+}
+
+
+// "Wax all → #1" in the alert, at the end of the rotation: as Wax all in the settings (every
+// chain to 0 km, #1 on the bike). Asks for a second click; the demo only closes the alert.
+function onAlertWaxAll(ev) {
+    ev.stopPropagation();
+    if (!confirmed(ev.currentTarget)) {
+        return;
+    }
+    hideAlert();
+    if (demoKind) {
+        return;
+    }
+    mutate(Core.waxAll);
+    alertedLevel.clear();
+}
+
+
+// "Switch to …" in the alert: puts that chain on the bike (as "Put on bike" in the settings).
+// The demo never changes the log, so there it only closes the message.
+function onAlertSwitch(ev) {
+    ev.stopPropagation();
+    const id = ev.currentTarget.dataset.id;
+    hideAlert();
+    if (demoKind || !id) {
+        return;
+    }
+    mutate(d => {
+        if (!d.chains.some(c => c.id === id)) {
+            return false;
+        }
+        d.activeId = id;
+    });
 }
 
 
@@ -563,10 +626,22 @@ function renderDisplay() {
         setText(disp.querySelector('.wax-sub-km'),
                 `${Core.fmtKm(chain.sinceWaxM)} / ${chain.limitKm} km` + ride);
     }
+    renderAlert(d);
     if (!chain !== hadEmpty) {
         hadEmpty = !chain;
         fitSize();  // after the texts are in: an empty line has no height
     }
+}
+
+
+// Free height (CSS px) in the box with stage `size` shown; negative when it doesn't fit.
+// Leaves `size` set: callers set the stage they want afterwards.
+function spareFor(size) {
+    doc.dataset.waxSize = size;
+    const disp = $('#wax-display');
+    const cs = getComputedStyle(disp);
+    const room = disp.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    return room - disp.querySelector('.wax-main').offsetHeight;
 }
 
 
@@ -575,17 +650,56 @@ function renderDisplay() {
 // during a ride.
 let hadEmpty = null;
 function fitSize() {
-    const disp = $('#wax-display');
-    const main = disp.querySelector('.wax-main');
-    if (disp.classList.contains('empty')) {
+    if ($('#wax-display').classList.contains('empty')) {
         return;
     }
-    doc.dataset.waxSize = Core.pickSize(size => {
-        doc.dataset.waxSize = size;
-        const cs = getComputedStyle(disp);
-        const room = disp.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-        return main.offsetHeight <= room + 0.5;
-    });
+    doc.dataset.waxSize = Core.pickSize(size => spareFor(size) >= -0.5);
+    scheduleSnap();
+}
+
+
+// In Sauce, a second after the window was last resized, its height fits the stage it shows: no
+// empty space, and the text keeps its size (Sauce scales it with the width only, which stays).
+// The stage never changes by this; only a window too small for the smallest one grows to it.
+// Outside Sauce (browser, web server) the RPCs fail and nothing happens.
+const SNAP_DELAY_MS = 1000;
+let snapTimer;
+
+function scheduleSnap() {
+    if (!Common || !Common.rpc) {
+        return;
+    }
+    clearTimeout(snapTimer);
+    snapTimer = setTimeout(snapWindow, SNAP_DELAY_MS);
+}
+
+
+async function snapWindow() {
+    if ($('#wax-display').classList.contains('empty')) {
+        return;
+    }
+    const h = innerHeight;
+    const need = h - spareFor(doc.dataset.waxSize);
+    if (Math.abs(need - h) < 2) {
+        return;
+    }
+    try {
+        const bounds = await Common.rpc.getSenderWindowBounds();
+        // The window is sized in screen points, the page in CSS px: they differ by the zoom.
+        const zoom = bounds.width / innerWidth;
+        if (!(zoom > 0)) {
+            return;
+        }
+        const height = Math.ceil(bounds.height + (need - h) * zoom - 0.01);
+        // No loop: afterwards the stage fits exactly, and a size that doesn't change (e.g. held
+        // by a minimum size) fires no ResizeObserver.
+        if (height === bounds.height) {
+            return;
+        }
+        await Common.rpc.resizeOwnWindow(bounds.width, height);
+    } catch(e) {
+        // Not a Sauce window, or a Sauce without these RPCs: keep the size the user chose.
+    }
 }
 
 
@@ -630,6 +744,7 @@ function renderManage() {
     const s = $('#wax-settings');
     if (!s.contains(document.activeElement)) {
         s.alertPct.value = data.alertPct;
+        s.alertMessage.checked = data.alertMessage;
         s.beep.checked = data.beep;
         s.minimal.checked = data.minimal;
     }
@@ -698,11 +813,7 @@ function onWaxAll(ev) {
     if (!confirmed(ev.currentTarget)) {
         return;
     }
-    mutate(d => {
-        for (const chain of d.chains) {
-            Core.markWaxed(chain);
-        }
-    });
+    mutate(Core.waxAll);
     alertedLevel.clear();
     hideAlert();
 }
@@ -813,6 +924,7 @@ function onSettingsChange(ev) {
     const s = ev.currentTarget;
     // Read the form now: mutate runs later, and a render meanwhile may refill it.
     const pct = Math.round(Number(s.alertPct.value));
+    const alertMessage = s.alertMessage.checked;
     const beep = s.beep.checked;
     const minimal = s.minimal.checked;
     mutate(d => {
@@ -820,6 +932,7 @@ function onSettingsChange(ev) {
             d.alertPct = pct;
             alertedLevel.clear();
         }
+        d.alertMessage = alertMessage;
         d.beep = beep;
         d.minimal = minimal;
     });
@@ -908,6 +1021,8 @@ export async function main() {
         }
     });
     $('#wax-alert').addEventListener('click', hideAlert);
+    $('#wax-alert .wax-alert-switch').addEventListener('click', onAlertSwitch);
+    $('#wax-alert .wax-alert-waxall').addEventListener('click', onAlertWaxAll);
     render();
     fitSize();
     new ResizeObserver(fitSize).observe(doc);

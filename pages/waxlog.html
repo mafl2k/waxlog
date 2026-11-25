@@ -57,10 +57,17 @@
             <section id="wax-alert" role="alert">
                 <div class="wax-alert-icon"><ms>water_drop</ms></div>
                 <div class="wax-alert-text">
-                    <div class="wax-alert-title"></div>
+                    <div class="wax-alert-title"><span class="wax-alert-chain"></span><span class="wax-alert-km"></span></div>
                     <div class="wax-alert-msg"></div>
                 </div>
-                <button class="wax-alert-dismiss" title="Dismiss (or click anywhere, or press Esc)">OK</button>
+                <div class="wax-alert-buttons">
+                    <!-- Only when another chain is ready (under the alert threshold). -->
+                    <button class="wax-alert-switch" hidden title="Put this chain on the bike"><span class="wax-alert-verb">Switch to </span><span class="wax-alert-next"></span></button>
+                    <!-- Only when no chain is ready any more: the rotation is used up. -->
+                    <button class="wax-alert-waxall" hidden data-confirm="Sure? All to 0 km"
+                            title="Mark every chain as freshly waxed and put #1 on the bike"></button>
+                    <button class="wax-alert-dismiss" title="Dismiss (or click anywhere, or press Esc)">OK</button>
+                </div>
             </section>
         </div>
     </body>

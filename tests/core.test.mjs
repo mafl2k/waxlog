@@ -122,6 +122,8 @@ test('normalize repairs bad data', () => {
     assert.equal(n.alertPct, 76);
     assert.equal(n.ride, null);
     assert.equal(C.normalize({alertPct: 200}).alertPct, 99);
+    assert.equal(C.normalize({}).alertMessage, true);  // logs from before 0.7 keep the message
+    assert.equal(C.normalize({alertMessage: false}).alertMessage, false);
 });
 
 
@@ -304,4 +306,28 @@ test('savePlan saves the standing-still checkpoint every 30 min', () => {
     const s0 = st(30000, 3600, 10 * H);
     assert.equal(C.savePlan(s0, st(30000, 3600, 10 * H + 20 * 60e3), s0).saveNow, false);
     assert.equal(C.savePlan(s0, st(30000, 3600, 10 * H + 30 * 60e3), s0).saveNow, true);
+});
+
+
+test('nextInRotation: the next ready chain in list order, wrapping; null when all are used', () => {
+    const ch = (id, km) => ({id, name: id, color: '#000000', limitKm: 100, sinceWaxM: km * 1000, totalM: 0, waxCount: 0});
+    const d = {chains: [ch('a', 95), ch('b', 10), ch('c', 0)], activeId: 'a', alertPct: 90};
+    assert.equal(C.nextInRotation(d).id, 'b');       // list order, not the least used (c)
+    d.activeId = 'c';
+    d.chains[2].sinceWaxM = 95000;
+    assert.equal(C.nextInRotation(d).id, 'b');       // wraps past a used #1
+    d.chains[1].sinceWaxM = 92000;
+    assert.equal(C.nextInRotation(d), null);         // rotation used up
+    assert.equal(C.nextInRotation({chains: [ch('a', 99)], activeId: 'a', alertPct: 90}), null);
+});
+
+test('waxAll: every chain to 0 km and #1 on the bike', () => {
+    const ch = (id, km) => ({id, name: id, color: '#000000', limitKm: 100, sinceWaxM: km * 1000, totalM: km * 1000, waxCount: 1});
+    const d = {chains: [ch('a', 95), ch('b', 99)], activeId: 'b', alertPct: 90};
+    C.waxAll(d);
+    assert.equal(d.activeId, 'a');
+    assert.deepEqual(d.chains.map(c => [c.sinceWaxM, c.waxCount, c.totalM]), [[0, 2, 95000], [0, 2, 99000]]);
+    const empty = {chains: [], activeId: null};
+    C.waxAll(empty);
+    assert.equal(empty.activeId, null);
 });

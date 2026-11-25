@@ -31,6 +31,7 @@ export function defaultData() {
         version: 2,
         activeId: null,
         alertPct: 90,
+        alertMessage: true,  // the on-screen alert; off: the colors (and the beep) only
         beep: true,
         minimal: true,  // stay invisible until the active chain hits the alert threshold
         ride: null,     // checkpoint: how far into the current Zwift ride we've credited
@@ -62,6 +63,7 @@ export function normalize(raw) {
         d.activeId = d.chains[0] ? d.chains[0].id : null;
     }
     d.alertPct = Math.round(Math.min(99, Math.max(50, Number(d.alertPct) || 90)));
+    d.alertMessage = d.alertMessage !== false;
     d.beep = d.beep !== false;
     d.minimal = d.minimal !== false;
     d.ride = isCheckpoint(d.ride) ? d.ride : null;
@@ -121,6 +123,32 @@ export function markWaxed(chain) {
     chain.sinceWaxM = 0;
     chain.waxCount = (chain.waxCount | 0) + 1;
     chain.waxedAt = Date.now();
+}
+
+
+// Chains rotate in list order (#1, #2, …): the next one after the chain on the bike that is
+// still under the alert threshold, wrapping around. Null when none is: the rotation is used up.
+export function nextInRotation(data) {
+    const n = data.chains.length;
+    const i = data.chains.findIndex(c => c.id === data.activeId);
+    for (let k = 1; k < n; k++) {
+        const c = data.chains[(i + k + n) % n];
+        if (pctUsed(c) < data.alertPct) {
+            return c;
+        }
+    }
+    return null;
+}
+
+
+// "Wax all": every chain freshly waxed, and the rotation starts over with #1 on the bike.
+export function waxAll(data) {
+    for (const chain of data.chains) {
+        markWaxed(chain);
+    }
+    if (data.chains.length) {
+        data.activeId = data.chains[0].id;
+    }
 }
 
 

@@ -241,27 +241,32 @@ html.wax-demo .wax-demo-badge { display: inline; }
 
 /* ---------- on-screen alert box ---------- */
 
+/* Icon left; title (with the live km), message and buttons stacked on the right. A short
+   window keeps one row: title and buttons. */
 #wax-alert {
     display: none;
     position: absolute;
     inset: 0;
     z-index: 5;
-    padding: 10px 12px;
+    padding: 8px 12px;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "icon text" "icon buttons";
+    align-content: center;
     align-items: center;
-    gap: 10px;
+    column-gap: 10px;
+    row-gap: 4px;
     background: linear-gradient(135deg, hsl(var(--wax-h-neg) / 0.35), hsl(var(--wax-h-bg2) / 0.95)),
                 var(--wax-bg-solid) !important;
     border: 2px solid var(--wax-due);
     border-radius: var(--wax-radius);
     animation: wax-pop 300ms ease-out;
+    cursor: pointer;  /* click anywhere (or Escape) to dismiss */
 }
-
-#wax-alert { cursor: pointer; }  /* click anywhere (or Escape) to dismiss */
 #wax-alert[data-level="over"] {
     background: linear-gradient(135deg, hsl(var(--wax-h-neg) / 0.6), hsl(var(--wax-h-bg2) / 0.95)),
                 var(--wax-bg-solid) !important;
 }
-html.wax-alerting #wax-alert { display: flex; }
+html.wax-alerting #wax-alert { display: grid; }
 
 @keyframes wax-pop {
     from { transform: scale(0.9); opacity: 0; }
@@ -269,36 +274,77 @@ html.wax-alerting #wax-alert { display: flex; }
 }
 
 .wax-alert-icon {
-    flex: 0 0 2.2em;
-    width: 2.2em;
+    grid-area: icon;
+    width: 1.6em;
     overflow: hidden;
     text-align: center;
 }
-
 .wax-alert-icon ms {
-    font-size: 2.2em;
+    font-size: 1.6em;
     color: var(--wax-due);
 }
-
 #wax-alert[data-level="over"] .wax-alert-icon ms { color: var(--wax-over); }
 
-/* Window shrunk to the slim row: keep just the title line of the alert. */
-@media (max-height: 80px) {
-    #wax-alert { padding: 2px 8px; }
-    .wax-alert-icon, .wax-alert-msg { display: none; }
+.wax-alert-text { grid-area: text; min-width: 0; }
+.wax-alert-title {
+    font-weight: 700;
+    font-size: 0.95em;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
 }
-
-.wax-alert-text { flex: 1; min-width: 0; }
-.wax-alert-title { font-weight: 700; font-size: 1.05em; }
 .wax-alert-msg {
-    font-size: 0.8em;
+    font-size: 0.7em;
     line-height: 1.25;
     color: var(--wax-dim);
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+.wax-alert-buttons {
+    grid-area: buttons;
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    min-width: 0;
+}
+#wax-root #wax-alert button {
+    flex: 0 0 auto;
+    font-size: 0.7em;
+    padding: 0.15em 0.8em;
+}
+#wax-alert :is(.wax-alert-switch, .wax-alert-waxall)[hidden] { display: none; }
+/* The way out of "over limit", so it stands out from OK: white like the status badge. */
+#wax-root #wax-alert :is(.wax-alert-switch, .wax-alert-waxall):not(.confirming) {
+    background: #fff;
+    color: #c62828;
+}
+#wax-root #wax-alert :is(.wax-alert-switch, .wax-alert-waxall) {
+    flex: 0 1 auto;
+    min-width: 0;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The one-row stages (window too short for the big box) get a one-row alert: the title (it has
+   the km) and the buttons. Tied to the stage, not to a height: Sauce scales the text with the
+   width, so the room needed in px depends on it. */
+html:not([data-wax-size="full"]) #wax-alert {
+    padding: 2px 8px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "text buttons";
+}
+/* No room for the chain's name: the km come first, the switch button is just "⇄ Green". */
+html:not([data-wax-size="full"]) :is(.wax-alert-icon, .wax-alert-msg, .wax-alert-chain, .wax-alert-verb) {
+    display: none;
+}
+html:not([data-wax-size="full"]) .wax-alert-next::before { content: "\21C4  "; }
 
 /* ---------- manage panel ---------- */
 
